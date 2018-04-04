@@ -6,6 +6,7 @@ import Settings from './app/components/Settings';
 import AlarmSettings from './app/components/AlarmSettings';
 import GPSSettings from './app/components/GPSSettings';
 import AlarmSetup from './app/components/AlarmSetup';
+import AddressMap from './app/components/AddressMap';
 
 export default class App extends Component{
   render() {
@@ -21,6 +22,7 @@ const RootStack = StackNavigator(
     SettingsScreen: {screen: Settings},
     AlarmSettingsScreen: {screen: AlarmSettings},
     GPSSettingsScreen: {screen: GPSSettings},
+    AddressMap: {screen: AddressMap}
   },
   {
     //Landing Screen
