@@ -56,7 +56,7 @@ export default class AddressMap extends React.Component {
         return;
       }
     });
-    Vibration.vibrate([1000, 0], true);
+    Vibration.vibrate([0, 1000], true);
     this.setState({alarm: true});
     alert("You've reached your destination!");
   }
