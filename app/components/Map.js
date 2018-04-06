@@ -8,44 +8,44 @@ export default class Map extends React.Component {
       origin: {}
     }
   }
-  componentDidMount = () => {
-    console.log("component mounted");
-    this.props.passWebView(this.webView);
+  componentWillUnmount = () => {
+    navigator.geolocation.clearWatch(this.state.watchId);
   }
   handleWebViewLoad = () => {
-    navigator.geolocation.watchPosition(pos => {
+    this.props.passWebView(this.webView);
+    const watchId = navigator.geolocation.watchPosition(pos => {
       this.setState({origin: pos.coords}, () => {
         this.webView.postMessage(JSON.stringify({
           type: 'origin',
-          origin: this.state.origin,
+          origin: [this.state.origin.latitude, this.state.origin.longitude],
         }));
       });
-    }, this.handleGeolocationError, {
-      enableHighAccuracy: this.props.enableHighAccuracy,
-      // distanceFilter: this.state.distanceFilter,
+    }, (err) => {
+      console.log("Error: ", err);
+      if (err.code !== 3) {
+        alert("Something seems to have gone wrong. Please try again later.");
+      }
     });
+    // , {
+    //   enableHighAccuracy: this.props.enableHighAccuracy,
+    //   // distanceFilter: this.state.distanceFilter,
+    // });
+    this.setState({watchId: watchId});
   }
   receiveWebViewMessage = (data) => {
     console.log("message received");
     data = JSON.parse(data.nativeEvent.data);
     switch (data.type) {
       case 'arrived':
-       console.log("we have arrived");
         this.props.startAlarm();
         break;
-      case 'alert':
-        alert(data.message);
-        break;
       case 'message':
-        console.log("Message: " + data.message);
+        console.log("Message: ", data.message);
         break;
     }
   }
-  handleGeolocationError = (err) => {
-    console.log("Error: " + JSON.stringify(err));
-  }
   handleWebViewError = (err) => {
-    console.log("Error: " + JSON.stringify(err));
+    console.log("Error: ", err);
   }
   render() {
     return (
@@ -54,10 +54,12 @@ export default class Map extends React.Component {
           style={{flex: 1}}
           source={require('./chime/index.html')}
           ref={webView => this.webView = webView}
+          onLoad={this.handleWebViewLoad}
+          onError={this.handleWebViewError}
+          onMessage={this.receiveWebViewMessage}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          onLoad={this.handleWebViewLoad}
-          onMessage={this.receiveWebViewMessage}
+          ignoreSslError={true} 
         />
       </View>
     );

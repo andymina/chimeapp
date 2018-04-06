@@ -1,8 +1,5 @@
 window.onload = () => {
 
-  document.body.firstElementChild.style.height = innerHeight + "px";
-  document.body.firstElementChild.style.width = innerWidth + "px";
-
   map = L.map('map', {
     attributionControl: false,
     // zoomControl: false,
@@ -15,6 +12,15 @@ window.onload = () => {
     accessToken: 'pk.eyJ1Ijoic3BlbGxldyIsImEiOiJjamNqdW5iazgzazI0MndudGh6NjVqM2xrIn0.VML7TdhGwdJlFXauBgwheQ'
   }).addTo(map);
 
+  // var blueIcon = new L.Icon({
+  //   iconUrl: './marker-icon-2x-blue.png',
+  //   shadowUrl: './marker-shadow.png',
+  //   iconSize: [25, 41],
+  //   iconAnchor: [12, 41],
+  //   popupAnchor: [1, -34],
+  //   shadowSize: [41, 41]
+  // });
+
   arrival = false; // Boolean that determines if the user is at the destination.
   pos = []; // Holds the user's current position.
   markers = L.featureGroup(); // Holds the origin and destination.
@@ -25,27 +31,32 @@ window.onload = () => {
     data = JSON.parse(data.data);
     switch (data.type) {
       case 'origin':
-        changeOrigin(data.origin.latitude, data.origin.longitude);
+        changeOrigin(data.origin);
         break;
       case 'destination':
-        handleAddressSubmit(data.destination, data.radius);
+        arrival = false;
+        changeDestination(data.destination, data.radius);
         break;
+      case 'reset':
+        clearMap();
+        if (origin) {
+          origin.addTo(map);
+          origin.addTo(markers);
+        }
+        break;
+      // case 'eval':
+      //   eval(data.code);
+      //   break;
     }
   });
 
 };
 
-handleAddressSubmit = (address, radius) => {
-  if (address && radius) {
-    arrival = false;
-    const provider = new GeoSearch.GoogleProvider();
-    provider.search({
-        query: address.toLowerCase()
-      })
-      .then(res => {
-        changeDestination(res[0].y, res[0].x, radius);
-      });
-  }
+sendAlert = (message) => {
+  window.postMessage(JSON.stringify({
+    type: 'alert',
+    message: message
+  }));
 }
 
 clearMap = () => {
@@ -77,17 +88,17 @@ redrawMap = (params) => {
   }
 }
 
-changeDestination = (lat, lng, radius) => {
+changeDestination = (coords, radius) => {
   clearMap();
-  destination = L.circle([lat, lng], {
+  destination = L.circle(coords, {
     radius: Number(radius) * 1609.34,
   });
   redrawMap({fit: true});
 }
 
-changeOrigin = (lat, lng) => {
+changeOrigin = (coords) => {
   clearMap();
-  origin = L.marker([lat, lng]);
+  origin = L.marker(coords/*, {icon: blueIcon}*/);
   redrawMap();
 }
 

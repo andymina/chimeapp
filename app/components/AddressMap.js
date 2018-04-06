@@ -1,70 +1,97 @@
 import React from 'react';
 import Map from './Map';
-import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, Sound } from 'react-native';
-// import { Constants, Audio } from 'expo';
-// import Sound from 'react-native-sound';
+import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, AsyncStorage, Vibration } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Sound from 'react-native-sound';
 
 export default class AddressMap extends React.Component {
   constructor() {
     super();
     this.state = {
       alarm: false,
-      // address: '123 Sesame Street',
-      // address: 'Louis E. Stocklmeir Elementary School',
       address: '',
+      savedAddresses: [],
+      res: {},
       coordinates: {},
       radius: .1,
-      // distanceFilter: 
       focus: false,
+      isFavorite: false,
     }
   }
-  loadAlarms(alarm) {
-    this.setState({chime: `./chime/alarms/${alarm}.mp3`});
-    // console.log(alarm);
-    // alarm = `./chime/alarms/${alarm}.mp3`;
-    // console.log(alarm);
-    // this.alarm = new Sound(alarm, Sound.MAIN_BUNDLE, (error) => {
-    //   if (error) {
-    //     console.log('failed to load the sound', error);
-    //     return;
-    //   }
-    //   this.alarm.play((success) => {
-    //     if (success) {
-    //       console.log('successfully finished playing');
-    //     } else {
-    //       console.log('success?,', success);
-    //       console.log('playback failed due to audio decoding errors');
-    //       // reset the player to its uninitialized state (android only)
-    //       // this is the only option to recover after an error occured and use the player again
-    //       this.alarm.reset();
-    //     }
-    //   });
-    // });
-    // this.alarm.setNumberOfLoops(-1);
-    // const alarm2 = soundObject.loadAsync(require('./chime/alarm2.mp3'));
-    // const alarm3 = soundObject.loadAsync(require('./chime/alarm3.mp3'));
-  }
   componentDidMount = () => {
-    // Sound.setCategory('Playback');
-    this.loadAlarms('alarm3');
+    AsyncStorage.getItem('savedAddresses').then((savedAddresses) => {
+      savedAddresses = savedAddresses ? JSON.parse(savedAddresses) : [];
+      this.setState({savedAddresses: savedAddresses});
+    });
+    console.log("Sound", Sound);
+    Sound.setCategory('Playback');
+    this.loadAlarm("alarm1");
+    this.alarm.setVolume(1);
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.handleKeyboardShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.handleKeyboardHide);
+  }
+  componentWillUnmount = () => {
+    if (this.state.alarm) {
+      this.alarm.stop();
+    }
+    this.alarm.release();
   }
   passWebView = (webView) => {
     this.webView = webView;
   }
+  loadAlarm = (alarmName) => {
+    this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
+      if (err) {
+        console.log("Error: ", err); 
+        return;
+      }
+      this.alarm.setNumberOfLoops(-1);
+      console.log('duration in seconds: ' + this.alarm.getDuration() + 'number of channels: ' + this.alarm.getNumberOfChannels());
+    });
+  }
   startAlarm = () => {
-    console.log("alarm started");
+    this.alarm.play(success => {
+      if (!success) {
+        this.alarm.reset();
+        return;
+      }
+    });
+    Vibration.vibrate([1000, 0], true);
     this.setState({alarm: true});
+    alert("You've reached your destination!");
   }
   stopAlarm = () => {
     this.alarm.stop();
+    this.webView.postMessage(JSON.stringify({
+      type: 'reset',
+    }));
+    Vibration.cancel();
     this.setState({alarm: false});
   }
   handleAddressChange = (val) => {
     this.setState({address: val});
+    this.geoSearch(val.toLowerCase())
+      .then(res => {
+        this.setState({
+          res: res,
+          isFavorite: this.state.savedAddresses.includes(res.results[0].formatted_address),
+          address: this.state.savedAddresses.includes(res.results[0].formatted_address) ? res.results[0].formatted_address : val
+        });
+      })
+      .catch(err => {
+        console.log("Error: ", err); 
+      });
   }
+  // handleEval = (val) => {
+  //   this.setState({eval: val});
+  // }
+  // sendEval = () => {
+  //   console.log("sentEval");
+  //   this.webView.postMessage(JSON.stringify({
+  //     type: 'eval',
+  //     code: this.state.eval
+  //   }));
+  // }
   handleKeyboardShow = () => {
     this.setState({focus: true});
   }
@@ -74,61 +101,136 @@ export default class AddressMap extends React.Component {
   handleRadiusChange = (val) => {
     this.setState({radius: val});
   }
+  geoSearch = async (query) => {
+    let params = {
+      address: query,
+      key: "AIzaSyCFahoN8YY9nnzyo2pYdXY9TnNdFB6JqdY"
+    };
+    params = Object.keys(params).map(key => encodeURIComponent(key) + "=" + encodeURIComponent(params[key])).join("&");
+    try {
+      const req = await fetch('https://maps.googleapis.com/maps/api/geocode/json?' + params);
+      return json = await req.json();
+    } catch(err) {
+      console.log("Error: ", err); 
+    }
+  }
   handleAddressSubmit = () => {
-    this.webView.postMessage(JSON.stringify({
-      type: 'destination',
-      destination: this.state.address,
-      radius: this.state.radius,
-    }));
-    // if (this.state.focus) {
-    //   this.handleKeyboardHide();
-    // }
+    Keyboard.dismiss();
+    const res = this.state.res;
+    if (res) {
+      this.webView.postMessage(JSON.stringify({
+        type: 'destination',
+        destination: [res.results[0].geometry.location.lat, res.results[0].geometry.location.lng],
+        radius: this.state.radius,
+      }));
+    } else {
+      console.log("Error: ", res); 
+      alert("Something seems to have gone wrong. Please try again later.");
+    }
+  }
+  saveAddress = () => {
+    if (this.state.address) {
+      const savedAddresses = this.state.savedAddresses,
+        res = this.state.res;
+      if (res) {
+        const address = res.results[0].formatted_address;
+        if (!savedAddresses.includes(address)) {
+          savedAddresses.push(address);
+          this.setState({savedAddresses: savedAddresses, isFavorite: true});
+          AsyncStorage.setItem('savedAddresses', JSON.stringify(savedAddresses))
+            .then(() => {
+              alert("Address successfully saved.");
+            })
+            .catch(err => {
+              alert("Something seems to have gone wrong. Please try again later.");
+            });
+        }
+      } else {
+        alert("Something seems to have gone wrong. Please try again later.");
+      }
+    }
+  }
+  removeAddress = () => {
+    if (this.state.address) {
+      const savedAddresses = this.state.savedAddresses,
+        res = this.state.res;
+      if (res) {
+        const address = res.results[0].formatted_address;
+        if (savedAddresses.includes(address)) {
+          savedAddresses.splice(savedAddresses.indexOf(address), 1);
+          this.setState({savedAddresses: savedAddresses, isFavorite: false});
+          AsyncStorage.setItem('savedAddresses', JSON.stringify(savedAddresses))
+            .then(() => {
+              alert("Address successfully removed.");
+            })
+            .catch(err => {
+              alert("Something seems to have gone wrong. Please try again later.");
+            });
+        }
+      } else {
+        alert("Something seems to have gone wrong. Please try again later.");
+      }
+    }
   }
   render() {
-    // if (this.state.alarm) { 
-    //   this.soundObject.playAsync();
-    // }
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <StatusBar barStyle="light-content" />
         <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%', margin: 15}}>
           <View style={{flex: 0.6, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
             <Map passWebView={this.passWebView} startAlarm={this.startAlarm} enableHighAccuracy={true} />
-            {/* <Sound
-              autoPlay={false}
-              
-              source={{
-                mp3: this.state.chime
-              }}
-            /> */}
           </View>
           <View style={{flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 20}}>
             <View style={{flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
-                <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                  <TextInput
-                    style={{textAlign: 'center', width: '85%', fontSize: 20, color: 'white'}}
-                    onChangeText={this.handleAddressChange}
-                    onFocus={this.handleKeyboardShow}
-                    // placeholder='search destination'
-                    placeholderTextColor="#fff"
-                  />
-                </View>
-                <View style={{flex: 1, width: '100%', marginRight: '5%', justifyContent: 'center', alignItems: 'center'}}>
-                  <TouchableOpacity onPress={this.state.alarm ? this.stopAlarm : this.handleAddressSubmit}>
-                    {this.state.alarm ? <Icon name='ios-close' size={32} color="white" /> :
-                      <Icon name='ios-search-outline' size={32} color="white" />}
-                  </TouchableOpacity>
-                </View>
+              <View style={{flex: 1, width: '100%', marginLeft: '4%', justifyContent: 'center', alignItems: 'center'}}>
+                <TouchableOpacity onPress={this.state.isFavorite ? this.removeAddress : this.saveAddress} disabled={!this.state.address}>
+                  {this.state.isFavorite ? <Icon name='ios-heart' size={32} color="white" /> :
+                    <Icon name='ios-heart-outline' size={32} color="white" />}
+                </TouchableOpacity>
+              </View>
+              <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                <TextInput
+                  style={{textAlign: 'center', width: '92%', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}
+                  onChangeText={this.handleAddressChange}
+                  onFocus={this.handleKeyboardShow}
+                  // value={this.state.address}
+                  onSubmitEditing={this.state.alarm ? null : this.handleAddressSubmit}
+                  placeholderTextColor="#fff"
+                />
+              </View>
+              <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
+                <TouchableOpacity onPress={this.state.alarm ? this.stopAlarm : this.handleAddressSubmit} disabled={!this.state.address}>
+                  {this.state.alarm ? <Icon name='ios-close' size={32} color="white" /> :
+                    <Icon name='ios-search-outline' size={32} color="white" />}
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', paddingTop: '4%'}}>
-              <TouchableOpacity style={{flex: 1}}>
+            <View style={{flex: 0.25, flexDirection: 'row'}}>
+            </View>
+            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
+              {/* <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                <TextInput
+                  style={{textAlign: 'center', width: '92%', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}
+                  onChangeText={this.handleEval}
+                  onFocus={this.handleKeyboardShow}
+                  onSubmitEditing={this.sendEval}
+                  placeholder="Enter code to evaluate."
+                  placeholderTextColor="#fff"
+                />
+              </View>
+              <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
+                <TouchableOpacity onPress={this.sendEval}>
+                  <Icon name='ios-checkmark' size={42} color="white" />
+                </TouchableOpacity>
+              </View> */}
+              <TouchableOpacity style={{flex: 1}} onPress={() => this.props.navigation.navigate('FavoritesScreen')}>
                 <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, flex: 1, marginLeft: 5, marginRight: 5, justifyContent: 'center', alignContent: 'center'}}>
-                  <Text style={{color: '#fff', fontSize: 20, textAlign: 'center', fontWeight: '500'}}>Save</Text>
+                  <Text style={{textAlign: 'center', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}>Favorites</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={{flex: 1}}>
+              <TouchableOpacity style={{flex: 1}} onPress={() => this.props.navigation.navigate('SettingsScreen')}>
                 <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, flex: 1, marginLeft: 5, marginRight: 5, justifyContent: 'center', alignContent: 'center'}}>
-                  <Text style={{color: '#fff', fontSize: 20, textAlign: 'center', fontWeight: '500'}}>Settings</Text>
+                  <Text style={{textAlign: 'center', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}>Settings</Text>
                 </View>
               </TouchableOpacity>
             </View>

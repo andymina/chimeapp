@@ -22,7 +22,7 @@ const RootStack = StackNavigator(
     SettingsScreen: {screen: Settings},
     AlarmSettingsScreen: {screen: AlarmSettings},
     GPSSettingsScreen: {screen: GPSSettings},
-    AddressMap: {screen: AddressMap}
+    AddressMapScreen: {screen: AddressMap}
   },
   {
     //Landing Screen

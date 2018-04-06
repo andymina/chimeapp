@@ -16,7 +16,7 @@ export default class AlarmSetup extends Component{
             <View style={{flexDirection: 'row'}}>
               <DefaultButton
               content={'By Address'}
-              run={() => {console.log("AddressMap"); this.props.navigation.navigate('AddressMap')}}
+              run={() => {this.props.navigation.navigate('AddressMapScreen')}}
               buttonStyling={{width: 125}}/>
 
               <DefaultButton
