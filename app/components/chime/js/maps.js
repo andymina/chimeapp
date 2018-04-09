@@ -2,8 +2,12 @@ window.onload = () => {
 
   map = L.map('map', {
     attributionControl: false,
-    // zoomControl: false,
+    zoomControl: false,
   });
+
+  L.control.zoom({
+    position:'bottomleft'
+  }).addTo(map);
 
   tileLayer = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -11,6 +15,10 @@ window.onload = () => {
     id: 'mapbox.streets',
     accessToken: 'pk.eyJ1Ijoic3BlbGxldyIsImEiOiJjamNqdW5iazgzazI0MndudGh6NjVqM2xrIn0.VML7TdhGwdJlFXauBgwheQ'
   }).addTo(map);
+
+  tileLayer.on('tileload', e => {
+    sendAlert("tiles loaded: " + JSON.stringify(e));
+  });
 
   // var blueIcon = new L.Icon({
   //   iconUrl: './marker-icon-2x-blue.png',

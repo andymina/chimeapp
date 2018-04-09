@@ -39,8 +39,11 @@ export default class Map extends React.Component {
       case 'arrived':
         this.props.startAlarm();
         break;
-      case 'message':
+      case 'log':
         console.log("Message: ", data.message);
+        break;
+      case 'alert':
+        alert(data.message);
         break;
     }
   }
@@ -49,7 +52,7 @@ export default class Map extends React.Component {
   }
   render() {
     return (
-      <View style={styles.webView}>
+      <View style={[styles.webView, this.props.style]}>
         <WebView
           style={{flex: 1}}
           source={require('./chime/index.html')}
@@ -68,9 +71,7 @@ export default class Map extends React.Component {
 
 const styles = StyleSheet.create({
   webView: {
-    width: '85%',
     alignSelf: 'center',
-    borderWidth: 2,
     borderColor: 'black',
     borderStyle: 'solid',
     height: '100%',

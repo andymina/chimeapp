@@ -93,10 +93,10 @@ export default class AddressMap extends React.Component {
   //   }));
   // }
   handleKeyboardShow = () => {
-    this.setState({focus: true});
+    // this.setState({focus: true});
   }
   handleKeyboardHide = () => {
-    this.setState({focus: false});
+    // this.setState({focus: false});
   }
   handleRadiusChange = (val) => {
     this.setState({radius: val});
@@ -176,11 +176,11 @@ export default class AddressMap extends React.Component {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <StatusBar barStyle="light-content" />
-        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%', margin: 15}}>
-          <View style={{flex: 0.6, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
-            <Map passWebView={this.passWebView} startAlarm={this.startAlarm} enableHighAccuracy={true} />
+        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
+          <View style={{flex: 1, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
+            <Map passWebView={this.passWebView} style={{width: '100%'}} startAlarm={this.startAlarm} enableHighAccuracy={true} />
           </View>
-          <View style={{flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 20}}>
+          <View style={{position: 'absolute', top: 0, flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 25}}>
             <View style={{flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
               <View style={{flex: 1, width: '100%', marginLeft: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.isFavorite ? this.removeAddress : this.saveAddress} disabled={!this.state.address}>
@@ -205,9 +205,8 @@ export default class AddressMap extends React.Component {
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={{flex: 0.25, flexDirection: 'row'}}>
-            </View>
-            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
+            {/* <View style={{flex: 0.25, flexDirection: 'row'}}>
+            </View> */}
               {/* <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
                 <TextInput
                   style={{textAlign: 'center', width: '92%', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}
@@ -223,6 +222,7 @@ export default class AddressMap extends React.Component {
                   <Icon name='ios-checkmark' size={42} color="white" />
                 </TouchableOpacity>
               </View> */}
+            {/* <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
               <TouchableOpacity style={{flex: 1}} onPress={() => this.props.navigation.navigate('FavoritesScreen')}>
                 <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, flex: 1, marginLeft: 5, marginRight: 5, justifyContent: 'center', alignContent: 'center'}}>
                   <Text style={{textAlign: 'center', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}>Favorites</Text>
@@ -233,7 +233,13 @@ export default class AddressMap extends React.Component {
                   <Text style={{textAlign: 'center', fontSize: 24, color: 'white', fontFamily: 'Microsoft Yi Baiti'}}>Settings</Text>
                 </View>
               </TouchableOpacity>
-            </View>
+            </View> */}
+          </View>
+          <View style={{position: 'absolute', bottom: 0, right: 0, margin: 20}}>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate('SettingsScreen')}>
+                {/* style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, flex: 1, marginLeft: 5, marginRight: 5, justifyContent: 'center', alignContent: 'center'}}> */}
+                <Icon name='md-settings' size={40} color="black" />
+            </TouchableOpacity>
           </View>
         </View>
       </ImageBackground>
