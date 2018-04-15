@@ -1,5 +1,6 @@
 import React from 'react';
-import Map from './Map';
+// import Map from './Map';
+import MapView from 'react-native-maps';
 import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, AsyncStorage, Vibration } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Sound from 'react-native-sound';
@@ -178,7 +179,8 @@ export default class AddressMap extends React.Component {
         <StatusBar barStyle="light-content" />
         <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
           <View style={{flex: 1, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
-            <Map passWebView={this.passWebView} style={{width: '100%'}} startAlarm={this.startAlarm} enableHighAccuracy={true} />
+            {/* <Map passWebView={this.passWebView} style={{width: '100%'}} startAlarm={this.startAlarm} enableHighAccuracy={true} /> */}
+            <MapView />
           </View>
           <View style={{position: 'absolute', top: 0, flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 25}}>
             <View style={{flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
