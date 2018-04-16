@@ -1,10 +1,11 @@
 import React from 'react';
-// import Map from './Map';
-import MapView from 'react-native-maps';
+import Map from './Map';
 import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, AsyncStorage, Vibration } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Sound from 'react-native-sound';
+// react-native-communications
 
+// TODO: Replace maps api key with mine?
 export default class AddressMap extends React.Component {
   constructor() {
     super();
@@ -13,32 +14,40 @@ export default class AddressMap extends React.Component {
       address: '',
       savedAddresses: [],
       res: {},
+      origin: null,
+      destination: null,
       coordinates: {},
-      radius: .1,
+      radius: .15,
       focus: false,
       isFavorite: false,
     }
   }
   componentDidMount = () => {
+    const watchId = navigator.geolocation.watchPosition(pos => {
+      this.setState({origin: pos.coords});
+    }, (err) => {
+      console.log("Error: ", err);
+      if (err.code !== 3) {
+        alert("Something seems to have gone wrong. Please try again later.");
+      }
+    });
+    this.setState({watchId: watchId});
+    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.handleKeyboardShow);
+    this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.handleKeyboardHide);
+    Sound.setCategory('Playback');
+    this.loadAlarm("alarm1");
+    this.alarm.setVolume(1);
     AsyncStorage.getItem('savedAddresses').then((savedAddresses) => {
       savedAddresses = savedAddresses ? JSON.parse(savedAddresses) : [];
       this.setState({savedAddresses: savedAddresses});
     });
-    console.log("Sound", Sound);
-    Sound.setCategory('Playback');
-    this.loadAlarm("alarm1");
-    this.alarm.setVolume(1);
-    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.handleKeyboardShow);
-    this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.handleKeyboardHide);
   }
   componentWillUnmount = () => {
+    navigator.geolocation.clearWatch(this.state.watchId);
     if (this.state.alarm) {
       this.alarm.stop();
     }
     this.alarm.release();
-  }
-  passWebView = (webView) => {
-    this.webView = webView;
   }
   loadAlarm = (alarmName) => {
     this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
@@ -51,6 +60,7 @@ export default class AddressMap extends React.Component {
     });
   }
   startAlarm = () => {
+    this.setState({alarm: true, origin: null, destination: null});
     this.alarm.play(success => {
       if (!success) {
         this.alarm.reset();
@@ -58,15 +68,20 @@ export default class AddressMap extends React.Component {
       }
     });
     Vibration.vibrate([0, 1000], true);
-    this.setState({alarm: true});
     alert("You've reached your destination!");
+
   }
   stopAlarm = () => {
     this.alarm.stop();
-    this.webView.postMessage(JSON.stringify({
-      type: 'reset',
-    }));
     Vibration.cancel();
+    navigator.geolocation.getCurrentPosition(pos => {
+      this.setState({origin: pos.coords});
+    }, (err) => {
+      console.log("Error: ", err);
+      if (err.code !== 3) {
+        alert("Something seems to have gone wrong. Please try again later.");
+      }
+    });
     this.setState({alarm: false});
   }
   handleAddressChange = (val) => {
@@ -117,23 +132,22 @@ export default class AddressMap extends React.Component {
   }
   handleAddressSubmit = () => {
     Keyboard.dismiss();
-    const res = this.state.res;
-    if (res) {
-      this.webView.postMessage(JSON.stringify({
-        type: 'destination',
-        destination: [res.results[0].geometry.location.lat, res.results[0].geometry.location.lng],
-        radius: this.state.radius,
-      }));
-    } else {
-      console.log("Error: ", res); 
-      alert("Something seems to have gone wrong. Please try again later.");
-    }
+    // TODO: add delay to geoSearch call.
+    this.geoSearch(this.state.address.toLowerCase())
+      .then(res => {
+        this.setState({destination: res.results[0].geometry.location});
+      })
+      .catch(err => {
+        console.log("Error: ", err); 
+        alert("Something seems to have gone wrong. Please try again later.");
+      });
+    // TODO: add loading icon while getting res, reuse res currently in state.
   }
   saveAddress = () => {
     if (this.state.address) {
       const savedAddresses = this.state.savedAddresses,
         res = this.state.res;
-      if (res) {
+      if (res.results.length) {
         const address = res.results[0].formatted_address;
         if (!savedAddresses.includes(address)) {
           savedAddresses.push(address);
@@ -155,7 +169,7 @@ export default class AddressMap extends React.Component {
     if (this.state.address) {
       const savedAddresses = this.state.savedAddresses,
         res = this.state.res;
-      if (res) {
+      if (res.results.length) {
         const address = res.results[0].formatted_address;
         if (savedAddresses.includes(address)) {
           savedAddresses.splice(savedAddresses.indexOf(address), 1);
@@ -177,10 +191,9 @@ export default class AddressMap extends React.Component {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <StatusBar barStyle="light-content" />
-        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
+        {this.state.origin ? <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
           <View style={{flex: 1, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
-            {/* <Map passWebView={this.passWebView} style={{width: '100%'}} startAlarm={this.startAlarm} enableHighAccuracy={true} /> */}
-            <MapView />
+            <Map startAlarm={this.startAlarm} radius={this.state.radius} origin={this.state.origin} destination={this.state.destination ? {latitude: this.state.destination.lat, longitude: this.state.destination.lng} : null} />
           </View>
           <View style={{position: 'absolute', top: 0, flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 25}}>
             <View style={{flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
@@ -202,8 +215,7 @@ export default class AddressMap extends React.Component {
               </View>
               <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.alarm ? this.stopAlarm : this.handleAddressSubmit} disabled={!this.state.address}>
-                  {this.state.alarm ? <Icon name='ios-close' size={32} color="white" /> :
-                    <Icon name='ios-search-outline' size={32} color="white" />}
+                  <Icon name='ios-search-outline' size={32} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -239,11 +251,18 @@ export default class AddressMap extends React.Component {
           </View>
           <View style={{position: 'absolute', bottom: 0, right: 0, margin: 20}}>
             <TouchableOpacity onPress={() => this.props.navigation.navigate('SettingsScreen')}>
-                {/* style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, flex: 1, marginLeft: 5, marginRight: 5, justifyContent: 'center', alignContent: 'center'}}> */}
-                <Icon name='md-settings' size={40} color="black" />
+              <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10, borderRadius: 12}}>
+                <Icon name='md-settings' size={38} color="white" />
+              </View>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> : this.state.alarm ? <View>
+          <TouchableOpacity onPress={this.stopAlarm}>
+            <Icon name='ios-close' size={64} color="white" />
+          </TouchableOpacity>
+        </View> : <View style={{flex: 1, width: "100%", backgroundColor: 'rgba(0, 0, 0, 0.7)'}}>
+          <Text style={{fontSize: 32}}>Loading...</Text>
+        </View>}
       </ImageBackground>
     );
   }

@@ -1,79 +1,80 @@
 import React from 'react';
-import { View, WebView, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import geolib from 'geolib';
+import MapView, { Marker, Circle } from 'react-native-maps';
 
 export default class Map extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      origin: {}
-    }
-  }
-  componentWillUnmount = () => {
-    navigator.geolocation.clearWatch(this.state.watchId);
-  }
-  handleWebViewLoad = () => {
-    this.props.passWebView(this.webView);
-    const watchId = navigator.geolocation.watchPosition(pos => {
-      this.setState({origin: pos.coords}, () => {
-        this.webView.postMessage(JSON.stringify({
-          type: 'origin',
-          origin: [this.state.origin.latitude, this.state.origin.longitude],
-        }));
-      });
-    }, (err) => {
-      console.log("Error: ", err);
-      if (err.code !== 3) {
-        alert("Something seems to have gone wrong. Please try again later.");
+  componentWillReceiveProps = (nextProps) => {
+    if (JSON.stringify(nextProps.origin) !== JSON.stringify(this.props.origin) || JSON.stringify(nextProps.destination) !== JSON.stringify(this.props.destination)) {
+      if (nextProps.origin && nextProps.destination) {
+        const dist = geolib.getDistance(nextProps.origin, nextProps.destination);
+        if (dist < Number(this.props.radius) * 1609.34) {
+          this.props.startAlarm();
+        }
       }
-    });
-    // , {
-    //   enableHighAccuracy: this.props.enableHighAccuracy,
-    //   // distanceFilter: this.state.distanceFilter,
-    // });
-    this.setState({watchId: watchId});
-  }
-  receiveWebViewMessage = (data) => {
-    console.log("message received");
-    data = JSON.parse(data.nativeEvent.data);
-    switch (data.type) {
-      case 'arrived':
-        this.props.startAlarm();
-        break;
-      case 'log':
-        console.log("Message: ", data.message);
-        break;
-      case 'alert':
-        alert(data.message);
-        break;
+      if (this.map) {
+        if (nextProps.destination) {
+          console.log("nextProps.destination", nextProps.destination);
+          this.map.fitToCoordinates([nextProps.origin, nextProps.destination], {
+            edgePadding: {
+              top: 25,
+              right: 25,
+              bottom: 25,
+              left: 25,
+            },
+            animated: true
+          });
+        } else {
+          this.map.fitToCoordinates([nextProps.origin], {
+            edgePadding: {
+              top: 10,
+              right: 10,
+              bottom: 10,
+              left: 10,
+            },
+            animated: true
+          });
+        }
+      }
     }
-  }
-  handleWebViewError = (err) => {
-    console.log("Error: ", err);
   }
   render() {
+    // On iOS read docs for showUserLocation.
+    // Recenter button
     return (
-      <View style={[styles.webView, this.props.style]}>
-        <WebView
-          style={{flex: 1}}
-          source={require('./chime/index.html')}
-          ref={webView => this.webView = webView}
-          onLoad={this.handleWebViewLoad}
-          onError={this.handleWebViewError}
-          onMessage={this.receiveWebViewMessage}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          ignoreSslError={true} 
+      <MapView
+        ref={ref => this.map = ref}
+        style={styles.wrapper}
+        initialRegion={{
+          latitude: this.props.origin.latitude,
+          longitude: this.props.origin.longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
+        maxZoomLevel={16}
+      >
+        <Marker
+          ref={ref => this.origin = ref}
+          zIndex={10}
+          coordinate={this.props.origin}
         />
-      </View>
+        {this.props.destination && <Circle
+          ref={ref => this.destination = ref}
+          zIndex={1}
+          strokeColor={"rgba(51, 51, 51, 0.5)"}
+          strokeWidth={2}
+          fillColor={"rgba(205, 172, 218, 0.5)"}
+          center={this.props.destination}
+          radius={Number(this.props.radius) * 1609.34}
+        />}
+      </MapView>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  webView: {
-    alignSelf: 'center',
-    borderColor: 'black',
-    borderStyle: 'solid',
-    height: '100%',
+  wrapper: {
+    ...StyleSheet.absoluteFillObject,
+    height: Dimensions.get('window').height
   },
 });
