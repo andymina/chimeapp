@@ -7,8 +7,8 @@ export default class Settings extends Component{
   render() {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
-          <DefaultButton buttonStyling={style.button} content='Alarm Sound ' run={() => {this.props.navigation.navigate('AlarmSettingsScreen')}}/>
-          <DefaultButton buttonStyling={style.button} content='Position Radius' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
+          <DefaultButton buttonStyling={style.button} content='Alarm Sound' run={() => {this.props.navigation.navigate('AlarmSettingsScreen')}}/>
+          <DefaultButton buttonStyling={style.button} content='Radius Size' run={() => {this.props.navigation.navigate('RadiusSizeScreen')}}/>
           <DefaultButton buttonStyling={style.button} content='GPS Options' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
           <DefaultButton buttonStyling={style.button} content='Saved Locations' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
           <DefaultButton buttonStyling={style.button} content='Contact Us' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>

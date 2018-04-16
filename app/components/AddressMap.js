@@ -17,7 +17,7 @@ export default class AddressMap extends React.Component {
       origin: null,
       destination: null,
       coordinates: {},
-      radius: .15,
+      radius: null,
       focus: false,
       isFavorite: false,
     }
@@ -32,6 +32,10 @@ export default class AddressMap extends React.Component {
       }
     });
     this.setState({watchId: watchId});
+    this._sub = this.props.navigation.addListener(
+      'didFocus',
+      this.screenDidFocus
+    );
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.handleKeyboardShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.handleKeyboardHide);
     Sound.setCategory('Playback');
@@ -41,6 +45,7 @@ export default class AddressMap extends React.Component {
       savedAddresses = savedAddresses ? JSON.parse(savedAddresses) : [];
       this.setState({savedAddresses: savedAddresses});
     });
+    this.getSettings();
   }
   componentWillUnmount = () => {
     navigator.geolocation.clearWatch(this.state.watchId);
@@ -48,6 +53,8 @@ export default class AddressMap extends React.Component {
       this.alarm.stop();
     }
     this.alarm.release();
+    this._sub.remove();
+    Keyboard.removeAllListeners();
   }
   loadAlarm = (alarmName) => {
     this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
@@ -56,7 +63,6 @@ export default class AddressMap extends React.Component {
         return;
       }
       this.alarm.setNumberOfLoops(-1);
-      console.log('duration in seconds: ' + this.alarm.getDuration() + 'number of channels: ' + this.alarm.getNumberOfChannels());
     });
   }
   startAlarm = () => {
@@ -83,6 +89,15 @@ export default class AddressMap extends React.Component {
       }
     });
     this.setState({alarm: false});
+  }
+  screenDidFocus = (prop) => {
+    this.getSettings();
+  }
+  getSettings = () => {
+    AsyncStorage.getItem('settings').then(settings => {
+      settings = settings ? JSON.parse(settings) : {};
+      this.setState({radius: settings.radius ? settings.radius : 0.1});
+    });
   }
   handleAddressChange = (val) => {
     this.setState({address: val});
@@ -191,7 +206,7 @@ export default class AddressMap extends React.Component {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <StatusBar barStyle="light-content" />
-        {this.state.origin ? <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
+        {this.state.origin && this.state.radius ? <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
           <View style={{flex: 1, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
             <Map startAlarm={this.startAlarm} radius={this.state.radius} origin={this.state.origin} destination={this.state.destination ? {latitude: this.state.destination.lat, longitude: this.state.destination.lng} : null} />
           </View>

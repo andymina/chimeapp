@@ -5,10 +5,9 @@ import MapView, { Marker, Circle } from 'react-native-maps';
 
 export default class Map extends React.Component {
   componentWillReceiveProps = (nextProps) => {
-    if (JSON.stringify(nextProps.origin) !== JSON.stringify(this.props.origin) || JSON.stringify(nextProps.destination) !== JSON.stringify(this.props.destination)) {
+    if (JSON.stringify(nextProps.radius) !== JSON.stringify(this.props.radius) || JSON.stringify(nextProps.origin) !== JSON.stringify(this.props.origin) || JSON.stringify(nextProps.destination) !== JSON.stringify(this.props.destination)) {
       if (nextProps.origin && nextProps.destination) {
-        const dist = geolib.getDistance(nextProps.origin, nextProps.destination);
-        if (dist < Number(this.props.radius) * 1609.34) {
+        if (geolib.getDistance(nextProps.origin, nextProps.destination) < Number(nextProps.radius) * 1609.34) {
           this.props.startAlarm();
         }
       }

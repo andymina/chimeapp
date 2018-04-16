@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Text, View, ImageBackground, TouchableOpacity, StyleSheet, AsyncStorage, Button, Image } from 'react-native';
 import { StackNavigator } from 'react-navigation';
 import DeviceInfo from 'react-native-device-info';
+import Icon from 'react-native-vector-icons/Ionicons';
 import DefaultButton from './DefaultButton';
 
 export default class Home extends Component{
@@ -22,8 +23,15 @@ export default class Home extends Component{
             buttonStyling={{width: 250}}
             textStyling={{fontSize: 32}}
           />
+          <View style={{position: 'absolute', bottom: 0, right: 0, margin: 20}}>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate('SettingsScreen')}>
+              <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10, borderRadius: 12}}>
+                <Icon name='md-settings' size={38} color="white" />
+              </View>
+            </TouchableOpacity>
+          </View>
           <View style={style.appInfo}>
-          <Text style={style.infoText}>{DeviceInfo.getVersion()}</Text>
+            <Text style={style.infoText}>{DeviceInfo.getVersion()}</Text>
           </View>
 
             {/* settings icon */}
@@ -36,7 +44,6 @@ export default class Home extends Component{
 const style = StyleSheet.create({
   imageBackground : {
     width: '100%',
-    height: '100%',
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'space-evenly',
@@ -64,7 +71,7 @@ const style = StyleSheet.create({
   },
   infoText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 16,
     fontFamily: 'Microsoft Yi Baiti',
   }
   // icon: {
