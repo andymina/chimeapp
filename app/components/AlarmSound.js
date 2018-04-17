@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Text, View, ImageBackground, StyleSheet, Slider, ScrollView, TouchableOpacity, AsyncStorage } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import RNFS from 'react-native-fs';
+import { DocumentPicker, DocumentPickerUtil } from 'react-native-document-picker';
 import Sound from 'react-native-sound';
 import DefaultSlider from './DefaultSlider';
 
@@ -38,6 +40,12 @@ export default class AlarmVolume extends Component{
         console.log("Error: ", err); 
         return;
       }
+    });
+    let localSong = RNFS.CachesDirectoryPath + '/song-name.mp3';
+    RNFS.downloadFile('http://your-song.online/song.mp3', localSong).then(() => {
+      let song = new Sound(localSong, '', (error) =>  {
+        song.play();
+      });
     });
   }
   startAlarm = () => {

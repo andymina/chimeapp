@@ -7,6 +7,8 @@ export default class Map extends React.Component {
   componentWillReceiveProps = (nextProps) => {
     if (JSON.stringify(nextProps.radius) !== JSON.stringify(this.props.radius) || JSON.stringify(nextProps.origin) !== JSON.stringify(this.props.origin) || JSON.stringify(nextProps.destination) !== JSON.stringify(this.props.destination)) {
       if (nextProps.origin && nextProps.destination) {
+        console.log("dist", geolib.getDistance(nextProps.origin, nextProps.destination));
+        console.log("radius", Number(nextProps.radius) * 1609.34);
         if (geolib.getDistance(nextProps.origin, nextProps.destination) < Number(nextProps.radius) * 1609.34) {
           this.props.startAlarm();
         }

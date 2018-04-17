@@ -3,7 +3,7 @@ import Map from './Map';
 import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, AsyncStorage, Vibration } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Sound from 'react-native-sound';
-// react-native-communications
+import Communications from 'react-native-communications';
 
 // TODO: Replace maps api key with mine?
 export default class AddressMap extends React.Component {
@@ -79,6 +79,7 @@ export default class AddressMap extends React.Component {
     });
     Vibration.vibrate([0, 1000], true);
     alert("You've reached your destination!");
+    this.preformAction();
   }
   stopAlarm = () => {
     this.alarm.stop();
@@ -102,6 +103,9 @@ export default class AddressMap extends React.Component {
       this.resetAlarm(settings.volume);
       this.setState({radius: settings.radius ? settings.radius : 0.1});
     });
+  }
+  preformAction = () => {
+    Communications.text('347-858-1839', "Hi, I'm Carl");
   }
   handleAddressChange = (val) => {
     this.setState({address: val});
