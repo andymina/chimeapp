@@ -38,9 +38,6 @@ export default class AddressMap extends React.Component {
     );
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.handleKeyboardShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.handleKeyboardHide);
-    Sound.setCategory('Playback');
-    this.loadAlarm("alarm1");
-    this.alarm.setVolume(1);
     AsyncStorage.getItem('savedAddresses').then((savedAddresses) => {
       savedAddresses = savedAddresses ? JSON.parse(savedAddresses) : [];
       this.setState({savedAddresses: savedAddresses});
@@ -65,17 +62,23 @@ export default class AddressMap extends React.Component {
       this.alarm.setNumberOfLoops(-1);
     });
   }
+  resetAlarm = (volume) => {
+    Sound.setCategory('Playback');
+    this.alarm ? this.alarm.reset() : null;
+    this.loadAlarm("alarm1");
+    this.alarm.setVolume(volume ? volume : 1);
+  }
   startAlarm = () => {
     this.setState({alarm: true, origin: null, destination: null});
+    this.alarm.setVolume(this.alarm.getVolume());
     this.alarm.play(success => {
       if (!success) {
-        this.alarm.reset();
+        this.resetAlarm(this.alarm.getVolume());
         return;
       }
     });
     Vibration.vibrate([0, 1000], true);
     alert("You've reached your destination!");
-
   }
   stopAlarm = () => {
     this.alarm.stop();
@@ -96,6 +99,7 @@ export default class AddressMap extends React.Component {
   getSettings = () => {
     AsyncStorage.getItem('settings').then(settings => {
       settings = settings ? JSON.parse(settings) : {};
+      this.resetAlarm(settings.volume);
       this.setState({radius: settings.radius ? settings.radius : 0.1});
     });
   }

@@ -3,7 +3,7 @@ import { StackNavigator } from 'react-navigation';
 
 import Home from './app/components/Home';
 import Settings from './app/components/Settings';
-import AlarmSettings from './app/components/AlarmSettings';
+import AlarmSound from './app/components/AlarmSound';
 import RadiusSize from './app/components/RadiusSize';
 import GPSSettings from './app/components/GPSSettings';
 import AlarmSetup from './app/components/AlarmSetup';
@@ -22,7 +22,7 @@ const RootStack = StackNavigator(
     AlarmSetupScreen: {screen: AlarmSetup},
     SettingsScreen: {screen: Settings},
     RadiusSizeScreen: {screen: RadiusSize},
-    AlarmSettingsScreen: {screen: AlarmSettings},
+    AlarmSoundScreen: {screen: AlarmSound},
     GPSSettingsScreen: {screen: GPSSettings},
     AddressMapScreen: {screen: AddressMap}
   },
