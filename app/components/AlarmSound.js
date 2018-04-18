@@ -20,8 +20,12 @@ export default class AlarmVolume extends Component{
       settings = settings ? JSON.parse(settings) : {};
       this.setState({volume: (settings.volume ? settings.volume : 1) * 100});
     });
+    AsyncStorage.getItem('customAlarms').then(customAlarms => {
+      customAlarms = customAlarms ? JSON.parse(customAlarms) : {};
+      this.setState({customAlarms: customAlarms});
+    });
     Sound.setCategory('Playback');
-    this.loadAlarm({ name: "alarm1" });
+    this.loadAlarm({ name: "alarm1", autoPlay: false });
   }
   componentWillUnmount = () => {
     if (this.state.alarm) {
@@ -33,35 +37,38 @@ export default class AlarmVolume extends Component{
       settings.volume = this.state.volume/100;
       AsyncStorage.setItem('settings', JSON.stringify(settings));
     });
+    AsyncStorage.setItem('customAlarms', JSON.stringify(this.state.customAlarms));
   }
   uploadAudio = () => {
+    this.setState({playing: false});
+    this.alarm ? this.alarm.reset() : null;
     DocumentPicker.show({
       filetype: [DocumentPickerUtil.audio()]
     }, (err, res) => {
       if (res) {
         const encoding = "base64";
-        // store in local storage instead?
-        res.uri ? RNFS.readFile(res.uri, encoding).then(str => {
-          console.log("str", str);
-          const name = res.uri.split('/').pop().replace(/%/gi, "-");
-          // const name = "cheese";
+        console.log(res);
+        res.uri ? RNFS.readFile(res.uri, encoding).then(contents => {
+          const id = res.uri.split('/').pop().replace(/[#%&{}\<>*?/\s$!'":@]/gi, "-");
           RNFS.mkdir(`${RNFS.DocumentDirectoryPath}/custom.alarms`).then(() => {
-            RNFS.exists(`${RNFS.DocumentDirectoryPath}/custom.alarms`).then(st => {
-              console.log("new directory made? " + st);
-              RNFS.writeFile(`${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`, str, encoding).then(() => {
-                console.log("written to...");
-                console.log(`${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`);
-                this.loadAlarm({ name: name, userUploaded: true });
-              });
+            RNFS.writeFile(`${RNFS.DocumentDirectoryPath}/custom.alarms/${id}`, contents, encoding).then(() => {
+              let customAlarms = Object.assign({}, this.state.customAlarms);
+              customAlarms[id] = {
+                name: res.fileName,
+                path: `${RNFS.DocumentDirectoryPath}/custom.alarms/${id}`,
+                fileSize: res.fileSize,
+                type: res.type,
+              };
+              this.setState({customAlarms: customAlarms});
+              AsyncStorage.setItem('currentAlarm', JSON.stringify({ name: id, userUploaded: true }));
+              this.loadAlarm({ name: id, userUploaded: true });
             });
           });
         }): null;
       }
     });
   }
-  loadAlarm = ({ name, userUploaded = false }) => {
-    console.log("loadAlarm", "userUploaded: " + userUploaded, "name: " + name);
-    userUploaded ? console.log("basepath", `${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`) : null;
+  loadAlarm = ({ name, userUploaded = false, autoPlay = true }) => {
     this.alarm = new Sound(
       userUploaded ? `${RNFS.DocumentDirectoryPath}/custom.alarms/${name}` : `${name}.mp3`,
       userUploaded ? '' : Sound.MAIN_BUNDLE,
@@ -70,8 +77,7 @@ export default class AlarmVolume extends Component{
           console.log("Error: ", err); 
           return;
         }
-        console.log("this.alarm.isLoaded()", this.alarm.isLoaded());
-        this.startAlarm();
+        autoPlay ? this.startAlarm() : null;
       }
     );
   }

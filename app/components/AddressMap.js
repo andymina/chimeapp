@@ -42,7 +42,19 @@ export default class AddressMap extends React.Component {
       savedAddresses = savedAddresses ? JSON.parse(savedAddresses) : [];
       this.setState({savedAddresses: savedAddresses});
     });
-    this.getSettings();
+    AsyncStorage.getItem('currentAlarm').then((currentAlarm) => {
+      currentAlarm = currentAlarm ? JSON.parse(currentAlarm) : {};
+      this.setState({currentAlarm: currentAlarm});
+      if (currentAlarm.userUploaded) {
+        AsyncStorage.getItem('customAlarms').then((customAlarms) => {
+          customAlarms = customAlarms ? JSON.parse(customAlarms) : {};
+          this.setState({customAlarms: customAlarms});
+          this.getSettings();
+        });
+      } else {
+        this.getSettings();
+      }
+    });
   }
   componentWillUnmount = () => {
     navigator.geolocation.clearWatch(this.state.watchId);
@@ -54,20 +66,22 @@ export default class AddressMap extends React.Component {
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
   }
-  loadAlarm = (alarmName) => {
-    this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
+  resetAlarm = (volume) => {
+    const name = this.state.currentAlarm ? this.state.currentAlarm.name : 'alarm1';
+    const userUploaded = this.state.currentAlarm ? this.state.currentAlarm.userUploaded : false;
+    this.setState({alarm: false});
+    Sound.setCategory('Playback');
+    this.alarm ? this.alarm.reset() : null;
+    this.alarm = new Sound(
+      userUploaded ? this.state.customAlarms[name].path : `${name}.mp3`,
+      userUploaded ? '' : Sound.MAIN_BUNDLE,
+      (err) => {
       if (err) {
         console.log("Error: ", err); 
         return;
       }
       this.alarm.setNumberOfLoops(-1);
     });
-  }
-  resetAlarm = (volume) => {
-    this.setState({alarm: false});
-    Sound.setCategory('Playback');
-    this.alarm ? this.alarm.reset() : null;
-    this.loadAlarm("alarm1");
     this.alarm.setVolume(volume ? volume : 1);
   }
   startAlarm = () => {
