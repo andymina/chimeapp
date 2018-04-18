@@ -21,7 +21,7 @@ export default class AlarmVolume extends Component{
       this.setState({volume: (settings.volume ? settings.volume : 1) * 100});
     });
     Sound.setCategory('Playback');
-    this.loadAlarm("alarm1");
+    this.loadAlarm({ name: "alarm1" });
   }
   componentWillUnmount = () => {
     if (this.state.alarm) {
@@ -34,28 +34,55 @@ export default class AlarmVolume extends Component{
       AsyncStorage.setItem('settings', JSON.stringify(settings));
     });
   }
-  loadAlarm = (alarmName) => {
-    this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
-      if (err) {
-        console.log("Error: ", err); 
-        return;
+  uploadAudio = () => {
+    DocumentPicker.show({
+      filetype: [DocumentPickerUtil.audio()]
+    }, (err, res) => {
+      if (res) {
+        const encoding = "base64";
+        // store in local storage instead?
+        res.uri ? RNFS.readFile(res.uri, encoding).then(str => {
+          console.log("str", str);
+          const name = res.uri.split('/').pop().replace(/%/gi, "-");
+          // const name = "cheese";
+          RNFS.mkdir(`${RNFS.DocumentDirectoryPath}/custom.alarms`).then(() => {
+            RNFS.exists(`${RNFS.DocumentDirectoryPath}/custom.alarms`).then(st => {
+              console.log("new directory made? " + st);
+              RNFS.writeFile(`${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`, str, encoding).then(() => {
+                console.log("written to...");
+                console.log(`${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`);
+                this.loadAlarm({ name: name, userUploaded: true });
+              });
+            });
+          });
+        }): null;
       }
     });
-    let localSong = RNFS.CachesDirectoryPath + '/song-name.mp3';
-    RNFS.downloadFile('http://your-song.online/song.mp3', localSong).then(() => {
-      let song = new Sound(localSong, '', (error) =>  {
-        song.play();
-      });
-    });
+  }
+  loadAlarm = ({ name, userUploaded = false }) => {
+    console.log("loadAlarm", "userUploaded: " + userUploaded, "name: " + name);
+    userUploaded ? console.log("basepath", `${RNFS.DocumentDirectoryPath}/custom.alarms/${name}`) : null;
+    this.alarm = new Sound(
+      userUploaded ? `${RNFS.DocumentDirectoryPath}/custom.alarms/${name}` : `${name}.mp3`,
+      userUploaded ? '' : Sound.MAIN_BUNDLE,
+      (err) => {
+        if (err) {
+          console.log("Error: ", err); 
+          return;
+        }
+        console.log("this.alarm.isLoaded()", this.alarm.isLoaded());
+        this.startAlarm();
+      }
+    );
   }
   startAlarm = () => {
     this.setState({playing: true});
     this.alarm.play(success => {
       if (!success) {
+        this.setState({playing: false});
         this.alarm.reset();
         return;
       }
-      this.setState({playing: false});
     });
   }
   stopAlarm = () => {
@@ -78,6 +105,9 @@ export default class AlarmVolume extends Component{
             </TouchableOpacity> : <TouchableOpacity onPress={this.stopAlarm}>
               <Icon name="ios-square" size={size} color="white" />
             </TouchableOpacity>}
+          <TouchableOpacity onPress={this.uploadAudio}>
+            <Icon name="md-cloud-upload" size={size} color="white" />
+          </TouchableOpacity>
           {/* <View style={style.view}>
             <Text style={style.text}>Alarm 1</Text>
             <Text style={style.text}>Alarm 2</Text>

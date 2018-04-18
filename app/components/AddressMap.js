@@ -51,7 +51,8 @@ export default class AddressMap extends React.Component {
     }
     this.alarm.release();
     this._sub.remove();
-    Keyboard.removeAllListeners();
+    this.keyboardDidShowListener.remove();
+    this.keyboardDidHideListener.remove();
   }
   loadAlarm = (alarmName) => {
     this.alarm = new Sound(`${alarmName}.mp3`, Sound.MAIN_BUNDLE, err => {
@@ -63,6 +64,7 @@ export default class AddressMap extends React.Component {
     });
   }
   resetAlarm = (volume) => {
+    this.setState({alarm: false});
     Sound.setCategory('Playback');
     this.alarm ? this.alarm.reset() : null;
     this.loadAlarm("alarm1");
