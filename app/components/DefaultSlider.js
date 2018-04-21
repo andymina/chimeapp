@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import { Slider, Text, StyleSheet, View } from 'react-native';
 
-export default class DefaultSlider extends Component{
+export default class DefaultSlider extends Component {
   render() {
     const { sliderName, ...other } = this.props;
     return (
-        <View style={style.viewFrame}>
+        <View style={[style.viewFrame, this.props.viewStyle]}>
           <Text style={style.text}>{sliderName}</Text>
           <View>
-            <Slider style={style.slider} minimumTrackTintColor={'#A110A2'} thumbTintColor={'white'} {...other} />
+            <Slider style={[style.slider, this.props.sliderStyle]} minimumTrackTintColor={'#A110A2'} thumbTintColor={'white'} {...other} />
           </View>
         </View>
     );

@@ -7,11 +7,11 @@ export default class Settings extends Component{
   render() {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
-          <DefaultButton buttonStyling={style.button} content='Alarm Sound' run={() => {this.props.navigation.navigate('AlarmSoundScreen')}}/>
-          <DefaultButton buttonStyling={style.button} content='Radius Size' run={() => {this.props.navigation.navigate('RadiusSizeScreen')}}/>
-          <DefaultButton buttonStyling={style.button} content='GPS Options' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
-          <DefaultButton buttonStyling={style.button} content='Saved Locations' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
-          <DefaultButton buttonStyling={style.button} content='Contact Us' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
+          <DefaultButton buttonStyling={style.button} textStyling={style.text} capitalized content='Alarm Sound' run={() => {this.props.navigation.navigate('AlarmSoundScreen')}}/>
+          <DefaultButton buttonStyling={style.button} textStyling={style.text} capitalized content='Radius Size' run={() => {this.props.navigation.navigate('RadiusSizeScreen')}}/>
+          <DefaultButton buttonStyling={style.button} textStyling={style.text} capitalized content='GPS Options' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
+          <DefaultButton buttonStyling={style.button} textStyling={style.text} capitalized content='Saved Locations' run={() => {this.props.navigation.navigate('SavedLocationsScreen')}}/>
+          <DefaultButton buttonStyling={style.button} textStyling={style.text} capitalized content='Contact Us' run={() => {this.props.navigation.navigate('GeneralSettingsScreen')}}/>
       </ImageBackground>
     );
   }
@@ -29,5 +29,14 @@ const style = StyleSheet.create({
   button: {
     width: 250,
     padding: 20,
+    marginLeft: 15,
+    marginRight: 15
+  },
+  text: {
+    color: 'white',
+    fontSize: 25,
+    fontFamily: 'Microsoft Yi Baiti',
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

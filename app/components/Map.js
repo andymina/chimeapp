@@ -4,40 +4,33 @@ import geolib from 'geolib';
 import MapView, { Marker, Circle } from 'react-native-maps';
 
 export default class Map extends React.Component {
+  componentDidMount = () => {
+    this.props.hoistFocus(this.focusCurrentLocation);
+  }
   componentWillReceiveProps = (nextProps) => {
     if (JSON.stringify(nextProps.radius) !== JSON.stringify(this.props.radius) || JSON.stringify(nextProps.origin) !== JSON.stringify(this.props.origin) || JSON.stringify(nextProps.destination) !== JSON.stringify(this.props.destination)) {
       if (nextProps.origin && nextProps.destination) {
-        console.log("dist", geolib.getDistance(nextProps.origin, nextProps.destination));
-        console.log("radius", Number(nextProps.radius) * 1609.34);
         if (geolib.getDistance(nextProps.origin, nextProps.destination) < Number(nextProps.radius) * 1609.34) {
           this.props.startAlarm();
         }
       }
       if (this.map) {
         if (nextProps.destination) {
-          console.log("nextProps.destination", nextProps.destination);
           this.map.fitToCoordinates([nextProps.origin, nextProps.destination], {
             edgePadding: {
-              top: 25,
-              right: 25,
-              bottom: 25,
-              left: 25,
-            },
-            animated: true
-          });
-        } else {
-          this.map.fitToCoordinates([nextProps.origin], {
-            edgePadding: {
-              top: 10,
-              right: 10,
-              bottom: 10,
-              left: 10,
+              top: 35,
+              right: 35,
+              bottom: 35,
+              left: 35,
             },
             animated: true
           });
         }
       }
     }
+  }
+  focusCurrentLocation = () => {
+    this.map.animateToCoordinate(this.props.origin, 0);
   }
   render() {
     // On iOS read docs for showUserLocation.
@@ -53,14 +46,16 @@ export default class Map extends React.Component {
           longitudeDelta: 0.0421,
         }}
         maxZoomLevel={16}
+        // cacheEnabled
+        toolbarEnabled={false}
+        zoomControlEnabled={false}
+        showsCompass={false}
       >
         <Marker
-          ref={ref => this.origin = ref}
           zIndex={10}
           coordinate={this.props.origin}
         />
         {this.props.destination && <Circle
-          ref={ref => this.destination = ref}
           zIndex={1}
           strokeColor={"rgba(51, 51, 51, 0.5)"}
           strokeWidth={2}

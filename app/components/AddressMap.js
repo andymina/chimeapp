@@ -1,7 +1,8 @@
 import React from 'react';
 import Map from './Map';
 import { StyleSheet, ImageBackground, View, WebView, Keyboard, KeyboardAvoidingView, Text, TouchableOpacity, Slider, SliderIOS, TextInput, StatusBar, AsyncStorage, Vibration } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Sound from 'react-native-sound';
 import Communications from 'react-native-communications';
 
@@ -62,9 +63,13 @@ export default class AddressMap extends React.Component {
       this.alarm.stop();
     }
     this.alarm.release();
+    Vibration.cancel();
     this._sub.remove();
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
+  }
+  passMap = (map) => {
+    this.map = map;
   }
   resetAlarm = (volume) => {
     const name = this.state.currentAlarm ? this.state.currentAlarm.name : 'alarm1';
@@ -226,20 +231,27 @@ export default class AddressMap extends React.Component {
       }
     }
   }
+  hoistFocus = (ref) => {
+    this.focusCurrentLocation = ref;
+    this.forceUpdate();
+  }
   render() {
+    console.log("this.state.origin", this.state.origin);
+    console.log("this.state.radius", this.state.radius);
+    console.log(this.focusCurrentLocation);
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <StatusBar barStyle="light-content" />
         {this.state.origin && this.state.radius ? <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', width: '100%'}}>
           <View style={{flex: 1, width: '100%', display: this.state.focus ? 'none' : 'flex'}}>
-            <Map startAlarm={this.startAlarm} radius={this.state.radius} origin={this.state.origin} destination={this.state.destination ? {latitude: this.state.destination.lat, longitude: this.state.destination.lng} : null} />
+            <Map startAlarm={this.startAlarm} hoistFocus={this.hoistFocus} radius={this.state.radius} origin={this.state.origin} destination={this.state.destination ? {latitude: this.state.destination.lat, longitude: this.state.destination.lng} : null} />
           </View>
           <View style={{position: 'absolute', top: 0, flex: this.state.focus? 0.4 : 0.2, width: '100%', flexDirection: 'column', padding: 25}}>
             <View style={{flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: 35, justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
               <View style={{flex: 1, width: '100%', marginLeft: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.isFavorite ? this.removeAddress : this.saveAddress} disabled={!this.state.address}>
-                  {this.state.isFavorite ? <Icon name='ios-heart' size={32} color="white" /> :
-                    <Icon name='ios-heart-outline' size={32} color="white" />}
+                  {this.state.isFavorite ? <Ionicons name='ios-heart' size={32} color="white" /> :
+                    <Ionicons name='ios-heart-outline' size={32} color="white" />}
                 </TouchableOpacity>
               </View>
               <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
@@ -254,7 +266,7 @@ export default class AddressMap extends React.Component {
               </View>
               <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.alarm ? this.stopAlarm : this.handleAddressSubmit} disabled={!this.state.address}>
-                  <Icon name='ios-search-outline' size={32} color="white" />
+                  <Ionicons name='ios-search-outline' size={32} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -272,7 +284,7 @@ export default class AddressMap extends React.Component {
               </View>
               <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.sendEval}>
-                  <Icon name='ios-checkmark' size={42} color="white" />
+                  <Ionicons name='ios-checkmark' size={42} color="white" />
                 </TouchableOpacity>
               </View> */}
             {/* <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingLeft: 10, paddingRight: 10}}>
@@ -288,16 +300,23 @@ export default class AddressMap extends React.Component {
               </TouchableOpacity>
             </View> */}
           </View>
+          <View style={{position: 'absolute', bottom: 0, left: 0, margin: 20}}>
+            <TouchableOpacity onPress={this.focusCurrentLocation}>
+              <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', paddingTop: 10, paddingBottom: 10, paddingLeft: 11, paddingRight: 11, borderRadius: 12}}>
+                <MaterialIcons name='my-location' size={34} color="white" />
+              </View>
+            </TouchableOpacity>
+          </View>
           <View style={{position: 'absolute', bottom: 0, right: 0, margin: 20}}>
             <TouchableOpacity onPress={() => this.props.navigation.navigate('SettingsScreen')}>
               <View style={{backgroundColor: 'rgba(0, 0, 0, 0.7)', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10, borderRadius: 12}}>
-                <Icon name='md-settings' size={38} color="white" />
+                <Ionicons name='ios-settings' size={38} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </View> : this.state.alarm ? <View>
           <TouchableOpacity onPress={this.stopAlarm}>
-            <Icon name='ios-close' size={64} color="white" />
+            <Ionicons name='ios-close' size={64} color="white" />
           </TouchableOpacity>
         </View> : <View style={{flex: 1, width: "100%", backgroundColor: 'rgba(0, 0, 0, 0.7)'}}>
           <Text style={{fontSize: 32}}>Loading...</Text>

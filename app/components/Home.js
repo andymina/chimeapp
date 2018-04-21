@@ -18,7 +18,8 @@ export default class Home extends Component{
             <Text style={style.oneLiner}>{'Travel with ease.'}</Text>
           </View>
           <DefaultButton 
-            content={'GET STARTED'}
+            content={'Get Started'}
+            capitalized
             run={() => {this.props.navigation.navigate('AddressMapScreen')}}
             buttonStyling={{width: 250}}
             textStyling={{fontSize: 32}}

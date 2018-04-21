@@ -35,24 +35,36 @@ export default class RadiusSize extends Component {
   handleRadiusChange = (val) => {
     this.setState({radius: val});
   }
+  stayCenter = () => {
+    this.map.animateToCoordinate(this.state.origin, 0);
+  }
   render() {
     return (
         <ImageBackground source={require('../img/background.jpg')} style={styles.imageBackground}>
-          <View style={{flex: 0.5, flexDirection: 'column', justifyContent: 'space-evenly', alignContent: 'center'}}>
-            <Text>Configure Radius</Text>
-            <Text>{this.state.radius.toFixed(2)}</Text>
-            <DefaultSlider sliderName={"Radius Size"} step={0.1} minimumValue={0.1} maximumValue={5.0} value={this.state.radius} onValueChange={this.handleRadiusChange} />
+          <View style={{flex: 0.5, width: '75%', flexDirection: 'column', justifyContent: 'space-evenly'}}>
+            <Text style={styles.text}>Configure Radius</Text>
+            <Text style={styles.text}>{Number(this.state.radius.toFixed(2)).toLocaleString([], {style: 'decimal'}) + "mi"}</Text>
           </View>
           {this.state.origin && this.state.radius ? <View style={styles.container}>
+              <DefaultSlider viewStyle={{borderRadius: 0, borderTopLeftRadius: 25, borderTopRightRadius: 25}} sliderName={"Radius Size"} sliderStyle={{width: 200}} step={0.05} minimumValue={0.05} maximumValue={5.0} value={this.state.radius} onValueChange={this.handleRadiusChange} />
               <MapView
+                ref={ref => this.map = ref}
                 style={styles.wrapper}
                 cacheEnabled
+                scrollEnabled={false}
+                rotateEnabled={false}
+                pitchEnabled={false}
+                toolbarEnabled={false}
+                zoomControlEnabled={false}
                 initialRegion={{
                   latitude: this.state.origin.latitude,
                   longitude: this.state.origin.longitude,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
+                  latitudeDelta: 0.16135,
+                  longitudeDelta: 0.073675,
                 }}
+                maxZoomLevel={16}
+                minZoomLevel={11}
+                onRegionChangeComplete={this.stayCenter}
               >
                 <Circle
                   zIndex={1}
@@ -63,7 +75,7 @@ export default class RadiusSize extends Component {
                   radius={Number(this.state.radius) * 1609.34}
                 />
               </MapView>
-            </View>: <View style={{flex: 1, width: "100%", backgroundColor: 'rgba(0, 0, 0, 0.7)'}}>
+            </View>: <View style={{flex: 1, width: "75%", backgroundColor: 'rgba(0, 0, 0, 0.7)'}}>
             <Text style={{fontSize: 32}}>Loading...</Text>
           </View>}
           <View style={{flex: 0.5}} />
@@ -78,14 +90,19 @@ const styles = StyleSheet.create({
     height: '100%',
     flex: 1,
     flexDirection: 'column',
-    justifyContent: 'space-evenly',
-    alignItems: 'center'
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
   container: {
     flex: 1,
-    width: '75%'
+    width: '75%',
   },
   wrapper: {
     flex: 1,
   },
+  text: {
+    textAlign: 'center',
+    fontSize: 32,
+    color: "#fff"
+  }
 });

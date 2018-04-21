@@ -6,7 +6,7 @@ import { DocumentPicker, DocumentPickerUtil } from 'react-native-document-picker
 import Sound from 'react-native-sound';
 import DefaultSlider from './DefaultSlider';
 
-export default class AlarmVolume extends Component{
+export default class AlarmSound extends Component{
   constructor() {
     super();
     this.state = {
@@ -20,9 +20,18 @@ export default class AlarmVolume extends Component{
       settings = settings ? JSON.parse(settings) : {};
       this.setState({volume: (settings.volume ? settings.volume : 1) * 100});
     });
-    AsyncStorage.getItem('customAlarms').then(customAlarms => {
-      customAlarms = customAlarms ? JSON.parse(customAlarms) : {};
-      this.setState({customAlarms: customAlarms});
+    AsyncStorage.getItem('currentAlarm').then((currentAlarm) => {
+      currentAlarm = currentAlarm ? JSON.parse(currentAlarm) : {};
+      this.setState({currentAlarm: currentAlarm});
+      if (currentAlarm.userUploaded) {
+        AsyncStorage.getItem('customAlarms').then((customAlarms) => {
+          customAlarms = customAlarms ? JSON.parse(customAlarms) : {};
+          this.setState({customAlarms: customAlarms});
+          this.loadAlarm({});
+        });
+      } else {
+        this.loadAlarm({});
+      }
     });
     Sound.setCategory('Playback');
     this.loadAlarm({ name: "alarm1", autoPlay: false });
