@@ -164,7 +164,7 @@ export default class AddressMap extends React.Component {
   geoSearch = async (query) => {
     let params = {
       address: query,
-      key: "AIzaSyCFahoN8YY9nnzyo2pYdXY9TnNdFB6JqdY"
+      key: "AIzaSyDMJ4sbMxSzd0cdr7i_9W68dL0QkFjySWE"
     };
     params = Object.keys(params).map(key => encodeURIComponent(key) + "=" + encodeURIComponent(params[key])).join("&");
     try {
