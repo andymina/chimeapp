@@ -8,6 +8,11 @@ export default class CustomizeStack extends Component{
   }
 }
 
-const RootStack = StackNavigator({
-  CustomizeScreen: Customize
-});
+const RootStack = StackNavigator(
+  {
+    CustomizeScreen: Customize
+  },
+  {
+    navigationOptions: { title: 'Customize' }
+  }
+);

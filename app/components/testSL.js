@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Text, Button, View } from 'react-native';
+import SearchBar from './SearchBar';
 import { StackNavigator } from 'react-navigation';
 
 export default class testSL extends Component{

@@ -8,6 +8,11 @@ export default class DonateStack extends Component{
   }
 }
 
-const RootStack = StackNavigator({
-  DonateScreen: Donate
-});
+const RootStack = StackNavigator(
+  {
+    DonateScreen: Donate
+  },
+  {
+    navigationOptions: { title: 'Donate' }
+  }
+);

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, ImageBackground, StyleSheet, FlatList, AsyncStorage } from 'react-native';
+import { Text, View, ImageBackground, StyleSheet, FlatList, AsyncStorage, Button } from 'react-native';
 import { StackNavigator } from 'react-navigation';
 import DefaultButton from './DefaultButton';
 
@@ -21,10 +21,11 @@ export default class GeneralSettings extends Component {
     return (
       <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
         <View>
-          {this.state.savedAddresses ? this.state.savedAddresses.map((savedAddress, i) => 
+          {this.state.savedAddresses ? this.state.savedAddresses.map((savedAddress, i) =>
             <View key={i}><Text>{savedAddress}</Text></View>
           ) : null}
         </View>
+        <Button title='Go Back' onPress={() => this.props.navigation.goBack()}/>
       </ImageBackground>
     );
   }

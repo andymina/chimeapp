@@ -8,6 +8,11 @@ export default class ContactStack extends Component{
   }
 }
 
-const RootStack = StackNavigator({
-  ContactScreen: Contact
-});
+const RootStack = StackNavigator(
+  {
+    ContactScreen: Contact,
+  },
+  {
+    navigationOptions: { title: 'Contact' }    
+  }
+);
