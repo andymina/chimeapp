@@ -1,74 +1,36 @@
 import React, { Component } from 'react';
-import { TabNavigator, TabBarBottom, StackNavigator } from 'react-navigation';
+import { StackNavigator } from 'react-navigation';
+
+import Home from './app/components/Home';
+import Settings from './app/components/Settings';
+import AlarmSound from './app/components/AlarmSound';
+import RadiusSize from './app/components/RadiusSize';
+import GPSSettings from './app/components/GPSSettings';
+import SavedLocations from './app/components/SavedLocations';
+import AlarmSetup from './app/components/AlarmSetup';
 import AddressMap from './app/components/AddressMap';
-import parentSL from './app/components/parentSL';
-import CustomizeStack from './app/components/CustomizeStack';
-import DonateStack from './app/components/DonateStack';
-import ContactStack from './app/components/ContactStack';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import Foundation from 'react-native-vector-icons/Foundation';
 
 export default class App extends Component{
   render() {
-    return <RootTab/>;
+    return <RootStack/>;
   }
 }
 
-const RootTab = TabNavigator(
+const RootStack = StackNavigator(
   {
     //Screens
-    AddressMapScreen: {
-      screen: AddressMap,
-      navigationOptions: { title: 'Map' },
-    },
-    SavedLocationsScreen: {
-      screen: parentSL,
-      navigationOptions: { title: 'Saved Locations' },
-    },
-    CustomizeScreen: {
-      screen: CustomizeStack,
-      navigationOptions: { title: 'Customize' },
-    },
-    DonateScreen: {
-      screen: DonateStack,
-      navigationOptions: { title: 'Donate' },
-    },
-    ContactScreen: {
-      screen: ContactStack,
-      navigationOptions: { title: 'Contact' },
-    }
+    HomeScreen: {screen: Home},
+    AlarmSetupScreen: {screen: AlarmSetup},
+    SettingsScreen: {screen: Settings},
+    RadiusSizeScreen: {screen: RadiusSize},
+    AlarmSoundScreen: {screen: AlarmSound},
+    GPSSettingsScreen: {screen: GPSSettings},
+    SavedLocationsScreen: {screen: SavedLocations},
+    AddressMapScreen: {screen: AddressMap}
   },
   {
     //Landing Screen
-    initialRouteName: 'AddressMapScreen',
-    order: ['AddressMapScreen', 'SavedLocationsScreen', 'CustomizeScreen', 'DonateScreen', 'ContactScreen'],
-    tabBarComponent: TabBarBottom,
-    tabBarPosition: 'bottom',
-    navigationOptions: ({ navigation }) => ({
-      tabBarIcon: ({ focused, tintColor }) => {
-        const { routeName } = navigation.state;
-        let iconName;
-        if (routeName === 'AddressMapScreen') {
-          iconName = `ios-map`;
-        } else if (routeName === 'SavedLocationsScreen') {
-          return <Foundation name='save' size={30} color={tintColor}/>
-        } else if (routeName === 'CustomizeScreen') {
-          iconName = `ios-settings`;
-        } else if (routeName === 'DonateScreen') {
-          iconName = `ios-card`;
-        } else if (routeName === 'ContactScreen') {
-          iconName = `ios-mail`;
-        }
-
-        return <Ionicons name={iconName} size={30} color={tintColor} />;
-      },
-    }),
-    tabBarOptions: {
-      activeTintColor: '#941AB7',
-      activeBackgroundColor: '#FFFFFF',
-
-      inactiveTintColor: '#FFFFFF',
-      inactiveBackgroundColor: '#941AB7',
-    },
+    initialRouteName: 'HomeScreen',
+    navigationOptions : {header: null}
   }
 );
