@@ -10,99 +10,189 @@ export default class AlarmSound extends Component{
   constructor() {
     super();
     this.state = {
-      origin: null,
-      playing: false,
-      volume: 0
+      loading: true,
+      volume: 100,
+      currentAlarm: null,
+      isAlarmPlaying: false,
+      customAlarms: null,
+      isAlarmCustom: false
     }
   }
   componentDidMount = () => {
-    AsyncStorage.getItem('settings').then(settings => {
-      settings = settings ? JSON.parse(settings) : {};
-      this.setState({volume: (settings.volume ? settings.volume : 1) * 100});
-    });
-    AsyncStorage.getItem('currentAlarm').then((currentAlarm) => {
-      currentAlarm = currentAlarm ? JSON.parse(currentAlarm) : {};
-      this.setState({currentAlarm: currentAlarm});
-      if (currentAlarm.userUploaded) {
-        AsyncStorage.getItem('customAlarms').then((customAlarms) => {
-          customAlarms = customAlarms ? JSON.parse(customAlarms) : {};
-          this.setState({customAlarms: customAlarms});
-          this.loadAlarm({});
-        });
-      } else {
-        this.loadAlarm({});
-      }
-    });
     Sound.setCategory('Playback');
-    this.loadAlarm({ name: "alarm1", autoPlay: false });
+    AsyncStorage.getItem('settings')
+      .then(settings => {
+        settings = settings ? JSON.parse(settings) : {};
+        settings.alarm = settings.alarm ? settings.alarm : {};
+        this.setState({
+          volume: (settings.volume || 1) * 100,
+          currentAlarm: settings.alarm.current || 'alarm_1', // alarmName or Id
+          customAlarms: settings.alarm.customs || {}, // object full of custom alarms
+          isAlarmCustom: settings.alarm.isCustom || false, // boolean determining if alarm was uploaded or not
+        }, () => {
+          this.loadAlarm({ id: this.state.currentAlarm, userUploaded: this.state.isAlarmCustom, autoPlay: false })
+            .then(() => {
+              this.setState({ loading: false });
+            });
+        });
+      })
+      .catch(err => {
+        console.log("Error: ", err);
+      });
   }
   componentWillUnmount = () => {
-    if (this.state.alarm) {
+    if (this.state.isAlarmPlaying) {
       this.alarm.stop();
     }
     this.alarm.release();
-    AsyncStorage.getItem('settings').then(settings => {
-      settings = settings ? JSON.parse(settings) : {};
-      settings.volume = this.state.volume/100;
-      AsyncStorage.setItem('settings', JSON.stringify(settings));
-    });
-    AsyncStorage.setItem('customAlarms', JSON.stringify(this.state.customAlarms));
+    AsyncStorage.getItem('settings')
+      .then(settings => {
+        settings = settings ? JSON.parse(settings) : {};
+        settings.volume = this.state.settings;
+        settings.alarm = settings.alarm ? settings.alarm : {};
+        settings.alarm.current = this.state.currentAlarm;
+        settings.alarm.customs = this.state.customAlarms;
+        settings.alarm.isCustom = this.state.isAlarmCustom;
+        AsyncStorage.setItem('settings', JSON.stringify(settings))
+          .catch(err => {
+            console.log("Error: ", err);
+          });
+      })
+      .catch(err => {
+        console.log("Error: ", err);
+      });
   }
   uploadAudio = () => {
-    this.setState({playing: false});
-    this.alarm ? this.alarm.reset() : null;
-    DocumentPicker.show({
-      filetype: [DocumentPickerUtil.audio()]
-    }, (err, res) => {
-      if (res) {
-        const encoding = "base64";
-        console.log(res);
-        res.uri ? RNFS.readFile(res.uri, encoding).then(contents => {
-          const id = res.uri.split('/').pop().replace(/[#%&{}\<>*?/\s$!'":@]/gi, "-");
-          RNFS.mkdir(`${RNFS.DocumentDirectoryPath}/custom.alarms`).then(() => {
-            RNFS.writeFile(`${RNFS.DocumentDirectoryPath}/custom.alarms/${id}`, contents, encoding).then(() => {
-              let customAlarms = Object.assign({}, this.state.customAlarms);
-              customAlarms[id] = {
-                name: res.fileName,
-                path: `${RNFS.DocumentDirectoryPath}/custom.alarms/${id}`,
-                fileSize: res.fileSize,
-                type: res.type,
-              };
-              this.setState({customAlarms: customAlarms});
-              AsyncStorage.setItem('currentAlarm', JSON.stringify({ name: id, userUploaded: true }));
-              this.loadAlarm({ name: id, userUploaded: true });
+    this.stopAlarm()
+      .then(() => {
+        DocumentPicker.show({ filetype: [DocumentPickerUtil.audio()] }, (err, res) => {
+          if (err) {
+            console.log(new Error(err));
+          } else if (res) {
+            if (res.uri) {
+              this.setState({ loading: true }, () => {
+                const encoding = "base64";
+                RNFS.readFile(res.uri, encoding)
+                  .then(contents => {
+                    const dir = `${RNFS.DocumentDirectoryPath}/custom.alarms`;
+                    const id = decodeURIComponent(new RegExp(".*\/(.*)").exec(res.uri)[1]).replace(":", "_");
+                    RNFS.mkdir(dir)
+                      .then(() => {
+                        const path = `${dir}/${id}.mp3`;
+                        RNFS.writeFile(path, contents, encoding)
+                          .then(() => {
+                            const customAlarms = Object.assign({}, this.state.customAlarms);
+                            customAlarms[id] = {
+                              name: res.fileName,
+                              path: path,
+                              fileSize: res.fileSize,
+                              type: res.type,
+                            };
+                            this.setState({ customAlarms: customAlarms });
+                            AsyncStorage.getItem('settings')
+                              .then(settings => {
+                                settings = settings ? JSON.parse(settings) : {};
+                                settings.alarm = settings.alarm ? settings.alarm : {};
+                                settings.alarm.current = id;
+                                settings.alarm.customs = customAlarms;
+                                settings.alarm.isCustom = true;
+                                AsyncStorage.setItem('settings', JSON.stringify(settings))
+                                  .catch(err => {
+                                    console.log("Error: ", err);
+                                  });
+                              })
+                              .catch(err => {
+                                console.log("Error: ", err);
+                              });
+                            this.loadAlarm({ id: id, userUploaded: true })
+                              .then(() => {
+                                this.setState({ loading: false });
+                              })
+                              .catch(err => {
+                                console.log("Error: ", err);
+                              });
+                          });
+                      });
+                  });
+                });
+            }
+          }
+        });
+      })
+      .catch(err => {
+        console.log("Error: ", err);
+      });
+  }
+  loadAlarm = ({ id, userUploaded = false, autoPlay = true }) => {
+    return new Promise((resolve, reject) => {
+      const callback = (err) => {
+        if (err) {
+          reject(err);
+        }
+        if (autoPlay) {
+          this.startAlarm()
+            .then(() => {
+              resolve();
+            })
+            .catch(err => {
+              console.log("Error: ", err);
             });
-          });
-        }): null;
-      }
+        } else {
+          resolve();
+        }
+      };
+      console.log('id', id);
+      console.log('userUploaded', userUploaded);
+      console.log('autoPlay', autoPlay);
+      this.alarm = userUploaded ? new Sound(`${RNFS.DocumentDirectoryPath}/custom.alarms/${id}.mp3`, ``, callback) : new Sound(`${id}.mp3`, Sound.MAIN_BUNDLE, callback);
+      this.alarm.setNumberOfLoops(-1);
     });
   }
-  loadAlarm = ({ name, userUploaded = false, autoPlay = true }) => {
-    this.alarm = new Sound(
-      userUploaded ? `${RNFS.DocumentDirectoryPath}/custom.alarms/${name}` : `${name}.mp3`,
-      userUploaded ? '' : Sound.MAIN_BUNDLE,
-      (err) => {
-        if (err) {
-          console.log("Error: ", err); 
-          return;
-        }
-        autoPlay ? this.startAlarm() : null;
-      }
-    );
-  }
   startAlarm = () => {
-    this.setState({playing: true});
-    this.alarm.play(success => {
-      if (!success) {
-        this.setState({playing: false});
-        this.alarm.reset();
-        return;
+    return new Promise((resolve, reject) => {
+      try {
+        this.setState({ isAlarmPlaying: true }, () => {
+          try {
+            this.alarm.play(success => {
+              if (!success) {
+                this.setState({ isAlarmPlaying: false });
+                this.alarm.reset();
+                reject(new Error('Playback failed due to audio decoding errors.'));
+              }
+            });
+            resolve();
+          } catch (err) {
+            reject(new Error(err));
+          }
+        });
+      } catch (err) {
+        reject(new Error(err));
       }
     });
   }
   stopAlarm = () => {
-    this.alarm.stop();
-    this.setState({playing: false});
+    return new Promise((resolve, reject) => {
+      try {
+        if (this.state.isAlarmPlaying) {
+          this.alarm.stop();
+          this.setState({ isAlarmPlaying: false }, () => {
+            resolve();
+          });
+        } else {
+          resolve();
+        }
+      } catch (err) {
+        reject(new Error(err));
+      }
+    });
+  }
+  setAlarmToDefault = () => {
+    this.setState({ loading: true }, () => {
+      this.loadAlarm({ id: `alarm_1` })
+        .then(() => {
+          this.setState({ loading: false });
+        });
+    });
   }
   handleVolumeChange = (val) => {
     this.setState({volume: val});
@@ -112,26 +202,21 @@ export default class AlarmSound extends Component{
     const size = 32;
     return (
         <ImageBackground source={require('../img/background.jpg')} style={style.imageBackground}>
-          <Text>Change Volume</Text>
-          <Text>{this.state.volume.toFixed(0) + "%"}</Text>
-          <DefaultSlider sliderName={"Volume"} step={5} minimumValue={0} maximumValue={100} value={this.state.volume} onValueChange={this.handleVolumeChange} />
-          {!this.state.playing ? <TouchableOpacity onPress={this.startAlarm}>
-              <Icon name="ios-play" size={size} color="white" />
-            </TouchableOpacity> : <TouchableOpacity onPress={this.stopAlarm}>
-              <Icon name="ios-square" size={size} color="white" />
-            </TouchableOpacity>}
-          <TouchableOpacity onPress={this.uploadAudio}>
-            <Icon name="md-cloud-upload" size={size} color="white" />
-          </TouchableOpacity>
-          {/* <View style={style.view}>
-            <Text style={style.text}>Alarm 1</Text>
-            <Text style={style.text}>Alarm 2</Text>
-            <Text style={style.text}>Tone 1</Text>
-            <Text style={style.text}>Tone 2</Text>
-            <Text style={style.text}>Sound 1</Text>
-            <Text style={style.text}>Sound 2</Text>
-            <Text style={style.text}>Custom...</Text>
-          </View> */}
+          {this.state.loading ? <View>
+            <Text>Loading</Text>
+          </View> : <View>
+            <Text>Change Volume</Text>
+            <Text>{this.state.volume.toFixed(0) + "%"}</Text>
+            <DefaultSlider sliderName={"Volume"} step={5} minimumValue={1e-12} maximumValue={100} value={this.state.volume} onValueChange={this.handleVolumeChange} />
+            {!this.state.isAlarmPlaying ? <TouchableOpacity onPress={this.startAlarm}>
+                <Icon name="ios-play" size={size} color="white" />
+              </TouchableOpacity> : <TouchableOpacity onPress={this.stopAlarm}>
+                <Icon name="ios-square" size={size} color="white" />
+              </TouchableOpacity>}
+            <TouchableOpacity onPress={this.uploadAudio}>
+              <Icon name="md-cloud-upload" size={size} color="white" />
+            </TouchableOpacity>
+          </View>}
         </ImageBackground>
     );
   }
@@ -145,11 +230,6 @@ const style = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'space-evenly',
     alignItems: 'center'
-  },
-  view: {
-    padding: 50,
-    borderRadius: 50,
-    backgroundColor: 'rgba(0, 0, 0, .7)',
   },
   text: {
     color: 'white'
