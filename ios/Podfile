@@ -1,5 +1,5 @@
 # Uncomment the next line to define a global platform for your project
-platform :ios, '8.0'
+platform :ios, '9.0'
 
 target 'Chime' do
   rn_path = '../node_modules/react-native'
@@ -34,17 +34,10 @@ target 'Chime' do
 
   # react-native-maps dependencies
   pod 'react-native-maps', path: rn_maps_path
-  pod 'react-native-google-maps', path: rn_maps_path  # Remove this line if you don't want to support GoogleMaps on iOS
-  pod 'GoogleMaps'  # Remove this line if you don't want to support GoogleMaps on iOS
-  pod 'Google-Maps-iOS-Utils' # Remove this line if you don't want to support GoogleMaps on iOS
-  pod 'react-native-spinkit', :path => '../node_modules/react-native-spinkit'
-
-  pod 'BVLinearGradient', :path => '../node_modules/react-native-linear-gradient'
-
-  pod 'react-native-document-picker', :path => '../node_modules/react-native-document-picker'
-
-  pod 'RNSVG', :path => '../node_modules/react-native-svg'
-
+  pod 'react-native-google-maps', path: rn_maps_path  # Unomment this line if you want to support GoogleMaps on iOS
+  pod 'GoogleMaps'  # Uncomment this line if you want to support GoogleMaps on iOS
+  pod 'Google-Maps-iOS-Utils' # Uncomment this line if you want to support GoogleMaps on iOS
+  pod 'Google-Mobile-Ads-SDK'
 end
 
 post_install do |installer|

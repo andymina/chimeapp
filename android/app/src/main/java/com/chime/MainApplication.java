@@ -3,15 +3,11 @@ package com.chime;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
-import com.horcrux.svg.SvgPackage;
 import com.airbnb.android.react.maps.MapsPackage;
-import com.reactnativedocumentpicker.ReactNativeDocumentPicker;
-import com.BV.LinearGradient.LinearGradientPackage;
-import com.react.rnspinkit.RNSpinkitPackage;
-import com.oblador.vectoricons.VectorIconsPackage;
-import com.learnium.RNDeviceInfo.RNDeviceInfo;
+import com.sbugert.rnadmob.RNAdMobPackage;
 import com.zmxv.RNSound.RNSoundPackage;
-import com.rnfs.RNFSPackage;
+import com.oblador.vectoricons.VectorIconsPackage;
+import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
@@ -32,15 +28,11 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
-            new SvgPackage(),
             new MapsPackage(),
-            new ReactNativeDocumentPicker(),
-            new LinearGradientPackage(),
-            new RNSpinkitPackage(),
-            new VectorIconsPackage(),
-            new RNDeviceInfo(),
+            new RNAdMobPackage(),
             new RNSoundPackage(),
-            new RNFSPackage()
+            new VectorIconsPackage(),
+            new RNGestureHandlerPackage()
       );
     }
 

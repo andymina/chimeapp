@@ -82,7 +82,7 @@ export default class AddressMap extends React.Component {
       userUploaded ? '' : Sound.MAIN_BUNDLE,
       (err) => {
       if (err) {
-        console.log("Error: ", err); 
+        console.log("Error: ", err);
         return;
       }
       this.alarm.setNumberOfLoops(-1);
@@ -139,7 +139,7 @@ export default class AddressMap extends React.Component {
         });
       })
       .catch(err => {
-        console.log("Error: ", err); 
+        console.log("Error: ", err);
       });
   }
   // handleEval = (val) => {
@@ -171,7 +171,7 @@ export default class AddressMap extends React.Component {
       const req = await fetch('https://maps.googleapis.com/maps/api/geocode/json?' + params);
       return json = await req.json();
     } catch(err) {
-      console.log("Error: ", err); 
+      console.log("Error: ", err);
     }
   }
   handleAddressSubmit = () => {
@@ -182,7 +182,7 @@ export default class AddressMap extends React.Component {
         this.setState({destination: res.results[0].geometry.location});
       })
       .catch(err => {
-        console.log("Error: ", err); 
+        console.log("Error: ", err);
         alert("Something seems to have gone wrong. Please try again later.");
       });
     // TODO: add loading icon while getting res, reuse res currently in state.
@@ -251,7 +251,7 @@ export default class AddressMap extends React.Component {
               <View style={{flex: 1, width: '100%', marginLeft: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.isFavorite ? this.removeAddress : this.saveAddress} disabled={!this.state.address}>
                   {this.state.isFavorite ? <Ionicons name='ios-heart' size={32} color="white" /> :
-                    <Ionicons name='ios-heart-outline' size={32} color="white" />}
+                    <Ionicons name='ios-heart-empty' size={32} color="white" />}
                 </TouchableOpacity>
               </View>
               <View style={{flex: 7, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
@@ -266,7 +266,7 @@ export default class AddressMap extends React.Component {
               </View>
               <View style={{flex: 1, width: '100%', marginRight: '4%', justifyContent: 'center', alignItems: 'center'}}>
                 <TouchableOpacity onPress={this.state.alarm ? this.stopAlarm : this.handleAddressSubmit} disabled={!this.state.address}>
-                  <Ionicons name='ios-search-outline' size={32} color="white" />
+                  <Ionicons name='ios-search' size={32} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
